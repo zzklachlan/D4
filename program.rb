@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative './user.rb'
+# require_relative './user.rb'
 
 # This is the main program
 class Program
