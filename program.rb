@@ -42,10 +42,21 @@ class Program
     end
   end
 
+  # This method checks the block number
+  def check_block_number(count, b_num)
+    return if count == b_num.to_i
+
+    puts "Line #{count}: Invalid block number #{b_num}, should be #{count} \nBLOCKCHAIN INVALID"
+    exit(0)
+  end
+
   # run the program
   def run
+    count = -1
     @file.each do |line|
-      @blocks << line
+      @blocks << line # each line is a block
+      count += 1
+      check_block_number(count, line.split('|')[0])
       transaction(line.split('|')[2])
     end
     output
