@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# require_relative './user.rb'
 require 'flamegraph'
 
 # This is the main program
@@ -50,17 +49,20 @@ class Program
   end
 
   def check_invalid_format(from_addr, to_addr, amount, b_num, tran)
+    if from_addr.nil? || to_addr.nil? || amount.nil?
+      puts "Line #{b_num}: Could not parse transactions list '#{tran}'"
+      puts 'BLOCKCHAIN INVALID'
+      exit(0)
+    end
+
     is_valid = true
     is_valid = false unless from_addr.length == 6 && to_addr.length == 6
-    puts 'here1' unless from_addr.length == 6 && to_addr.length == 6
     is_valid = false if amount < 0
     is_valid = false if check_string(from_addr) == false && from_addr != 'SYSTEM'
-    puts 'here2' if check_string(from_addr) == false && from_addr != 'SYSTEM'
     is_valid = false if check_string(to_addr) == false && to_addr != 'SYSTEM'
-    puts 'here3' if check_string(to_addr) == false && to_addr != 'SYSTEM'
 
     if is_valid == false
-      puts "Line #{b_num}: Could not parse transactions list #{tran}"
+      puts "Line #{b_num}: Could not parse transactions list '#{tran}'"
       puts 'BLOCKCHAIN INVALID'
       exit(0)
     end
@@ -83,11 +85,12 @@ class Program
   end
 
   def check_timestamp(prev_time, curr_time, b_num)
-    prev_time1 = prev_time.split('.')[0]
-    prev_time2 = prev_time.split('.')[1]
-    curr_time1 = curr_time.split('.')[0]
-    curr_time2 = curr_time.split('.')[1]
-    unless prev_time1.to_i == curr_time1.to_i && prev_time2.to_i < curr_time2.to_i
+    prev_time1 = prev_time.split('.')[0].to_i
+    prev_time2 = prev_time.split('.')[1].to_i
+    curr_time1 = curr_time.split('.')[0].to_i
+    curr_time2 = curr_time.split('.')[1].to_i
+
+    if prev_time1 > curr_time1 || (prev_time1 == curr_time1 && prev_time2 > curr_time2)
       puts "Line #{b_num}: Previous timestamp #{prev_time} => new timestamp #{curr_time}"
       puts 'BLOCKCHAIN INVALID'
       exit(0)
@@ -135,12 +138,12 @@ class Program
     @file.each do |line|
       @blocks << line.chomp # each line is a block
       curr_block = @blocks[count].split('|')
-      check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
       check_block_number(count, curr_block[0])
       check_timestamp(prev_timestamp, curr_block[3], curr_block[0].to_i) unless count.zero?
       check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
       transaction(curr_block[2], curr_block[0])
       check_balance(curr_block[0].to_i)
+      check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
       prev_timestamp = curr_block[3]
       prev_hash = curr_block[4]
       count += 1

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-# require 'flamegraph'
+require 'flamegraph'
 require_relative 'program'
 
-program = Program.new(ARGV[0])
-program.run
+Flamegraph.generate('flame_graph.html') do
+	program = Program.new(ARGV[0])
+	program.run
+end
