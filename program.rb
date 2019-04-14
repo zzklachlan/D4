@@ -52,7 +52,7 @@ class Program
     exit(0)
   end
 
-  def check_prev_block(prev_hash, curr_hash, b_num)  
+  def check_prev_hash(prev_hash, curr_hash, b_num)  
     unless prev_hash.eql? curr_hash
       puts "Line #{b_num}: Previous has was #{curr_hash}, should be #{prev_hash}"
       puts "BLOCKCHAIN INVALID"
@@ -69,7 +69,8 @@ class Program
       @blocks << line.chomp # each line is a block
       curr_block = @blocks[count].split('|')      
       check_block_number(count, curr_block[0])
-      check_prev_block(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
+
+      check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
       transaction(curr_block[2])
       prev_hash = curr_block[4]
       count += 1
