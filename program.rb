@@ -8,11 +8,13 @@ class Program
   attr_accessor :users
   attr_accessor :blocks
   attr_accessor :file
+  attr_accessor :hash_val
 
   # This is the initial mathod
   def initialize(file_name)
     @users = {}
     @blocks = []
+    @hash_val = {}
     open_file(file_name)
   end
 
@@ -50,14 +52,27 @@ class Program
     exit(0)
   end
 
+  def check_prev_block(prev_hash, curr_hash, b_num)
+    if prev_hash != curr_hash
+      puts "Line #{b_num}: Previous has was #{curr_hash}, should be #{prev_hash}"
+      puts "BLOCKCHAIN INVALID"
+      exit
+    end
+  end
+
   # run the program
   def run
-    count = -1
+    count = 0
+    prev_hash = ''
+    curr_block = []
     @file.each do |line|
       @blocks << line # each line is a block
+      curr_block = line.split('|')      
+      check_block_number(count, curr_block[0])
+      check_prev_block(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
+      transaction(curr_block[2])
+      prev_hash = curr_block[4]
       count += 1
-      check_block_number(count, line.split('|')[0])
-      transaction(line.split('|')[2])
     end
     output
   end
