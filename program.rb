@@ -36,11 +36,33 @@ class Program
   end
 
   # This takes care of every single transaction
-  def transaction(tran)
+  def transaction(tran, b_num)
     multi_tran = tran.split(':')
     multi_tran.each do |x|
       single_tran = x.split(/>|[()]/)
+      check_invalid_format(single_tran[0], single_tran[1], single_tran[2].to_i, b_num, tran)
       modify_user(single_tran[0], single_tran[1], single_tran[2].to_i)
+    end
+  end
+
+  def check_string(string)
+    string.scan(/\D/).empty?
+  end
+
+  def check_invalid_format(from_addr, to_addr, amount, b_num, tran)
+    is_valid = true
+    is_valid = false unless from_addr.length == 6 && to_addr.length == 6
+    puts 'here1' unless from_addr.length == 6 && to_addr.length == 6
+    is_valid = false if amount < 0
+    is_valid = false if check_string(from_addr) == false && from_addr != 'SYSTEM'
+    puts 'here2' if check_string(from_addr) == false && from_addr != 'SYSTEM'
+    is_valid = false if check_string(to_addr) == false && to_addr != 'SYSTEM'
+    puts 'here3' if check_string(to_addr) == false && to_addr != 'SYSTEM'
+
+    if is_valid == false
+      puts "Line #{b_num}: Could not parse transactions list #{tran}"
+      puts 'BLOCKCHAIN INVALID'
+      exit(0)
     end
   end
 
@@ -90,6 +112,20 @@ class Program
     end
   end
 
+  def check_hash(block_number, previous_hash, transaction_string, timestamp_string, expected_hash)
+    string_to_hash = "#{block_number}|#{previous_hash}|#{transaction_string}|#{timestamp_string}"
+    sum = 0
+    string_to_hash.unpack('U*').each do |x|
+      sum += ((x**3000) + (x**x) - (3**x)) * (7**x)
+    end
+    sum = (sum % 65536).to_s(16)
+    unless expected_hash == sum
+      puts "Line #{block_number}: String '#{string_to_hash}' hash set to #{expected_hash}, should be #{sum}"
+      puts 'BLOCKCHAIN INVALID'
+      exit(0)
+    end
+  end
+
   # run the program
   def run
     count = 0
@@ -98,11 +134,12 @@ class Program
     curr_block = []
     @file.each do |line|
       @blocks << line.chomp # each line is a block
-      curr_block = @blocks[count].split('|')      
+      curr_block = @blocks[count].split('|')
+      check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
       check_block_number(count, curr_block[0])
       check_timestamp(prev_timestamp, curr_block[3], curr_block[0].to_i) unless count.zero?
       check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
-      transaction(curr_block[2])
+      transaction(curr_block[2], curr_block[0])
       check_balance(curr_block[0].to_i)
       prev_timestamp = curr_block[3]
       prev_hash = curr_block[4]
