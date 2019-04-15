@@ -12,16 +12,16 @@ class ProgramTest < Minitest::Test
 	end
 	
 	def test_new_program_not_nil
-    refute_nil @test_program
-    assert_kind_of Program, @test_program
+		refute_nil @test_program
+		assert_kind_of Program, @test_program
 	end
 
 	# This test self.open_file
   def test_self_open_file
-    file_name = 'name'
-    assert_output("Usage: ruby verifier.rb <name_of_file> \n    name_of_file = name of file to verify\n"){
-      Program.open_file(file_name)
-    }
+		file_name = 'name'
+		assert_output("Usage: ruby verifier.rb <name_of_file> \n    name_of_file = name of file to verify\n"){
+			Program.open_file(file_name)
+		}
   end
 	
 	def test_modify_user
@@ -113,17 +113,6 @@ class ProgramTest < Minitest::Test
 	def test_cheack_invalid_extra_pipe
 		assert_equal @test_program.check_extra_pipe([1,1,1,1,1,1]), 1
 	end
-
-	# This test if run return extra pipe detected
-  # def test_run_return_extra_pipe
-  #   mock_file = Minitest::Mock.new('file')
-  #   program3 = Program.new(mock_file)
-  #   str = "1|1|1|1|1\n"
-  #   def mock_file.each; str; end
-  #   def String.chomp; "1|1|1|1|1";end
-  #   def String.split(y); [1,1,1,1,1];end
-  #   assert_output(""){program3.run}
-	# end
 	
 	def test_check_block_extra_pipe
 		def @test_program.check_extra_pipe(x); 1; end
@@ -137,12 +126,12 @@ class ProgramTest < Minitest::Test
 	end
 
 	def test_check_block_timestamp
-    def @test_program.check_extra_pipe(x); 0; end
-    def @test_program.check_block_number(x,y); 0;end
-    def @test_program.check_timestamp(x,y,z); 3; end
-    assert_equal "Line 3: Previous timestamp 1553184699.650330000 => "\
-    "new timestamp 1553184699.650330000 \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
-  end
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x,y); 0;end
+		def @test_program.check_timestamp(x,y,z); 3; end
+		assert_equal "Line 3: Previous timestamp 1553184699.650330000 => "\
+		"new timestamp 1553184699.650330000 \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
 
 	def test_check_block_prev_hash
 		def @test_program.check_extra_pipe(x); 0; end
@@ -196,12 +185,12 @@ class ProgramTest < Minitest::Test
 	
 	def test_run
 		mock_file = Minitest::Mock.new('file')
-    program3 = Program.new(mock_file)
-    def mock_file.each; "1|1|1|1|1\n"; end
-    def String.chomp; "1|1|1|1|1";end
+		program3 = Program.new(mock_file)
+		def mock_file.each; "1|1|1|1|1\n"; end
+		def String.chomp; "1|1|1|1|1";end
 		def String.split(y); [1,1,1,1,1];end
 		@test_program.error_code = 1
-    assert_output(""){program3.run}
+		assert_output(""){program3.run}
 	end
 
 	def test_output
