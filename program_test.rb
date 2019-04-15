@@ -114,6 +114,17 @@ class ProgramTest < Minitest::Test
 		assert_equal @test_program.check_extra_pipe([1,1,1,1,1,1]), 1
 	end
 
+	# This test if run return extra pipe detected
+  def test_run_return_extra_pipe
+    mock_file = Minitest::Mock.new('file')
+    program3 = Program.new(mock_file)
+    str = "1|1|1|1|1\n"
+    def mock_file.each; str; end
+    def String.chomp; "1|1|1|1|1";end
+    def String.split(y); [1,1,1,1,1];end
+    assert_output(""){program3.run}
+  end
+
 	def check_output
 		#puts @test_program.users
 		users = { '123456' => 10, '345678' => 0, '567890' => 0 }
