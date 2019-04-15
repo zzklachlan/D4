@@ -5,7 +5,6 @@ require 'flamegraph'
 # This is the main program
 class Program
   attr_accessor :users
-  attr_accessor :blocks
   attr_accessor :file
   attr_accessor :hash_val
   attr_accessor :error_code
