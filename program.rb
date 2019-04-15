@@ -160,16 +160,16 @@ class Program
       end
 
       error_balance = check_balance
-      @error_code = error_balance[0].to_i unless error_balance.zero?
+      @error_code = error_balance[0].to_i if error_balance.is_a? Array
       if error_code == 6
         return "Line #{count}: address #{error_balance[1]} has #{error_balance[2]} billcoins! \nBLOCKCHAIN INVALID"
       end
 
       error_hash = check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
-      @error_code = error_hash[0].to_i unless error_hash.zero?
+      @error_code = error_hash[0].to_i if error_hash.is_a? Array
       if error_code == 7
-        return "Line #{count}: String '#{error_hash[1]}' hash set to #{error_hash[2]},
-         should be #{error_hash[3]}\nBLOCKCHAIN INVALID"
+        return "Line #{count}: String '#{error_hash[1]}' hash set to #{error_hash[2]}, "\
+        "should be #{error_hash[3]}\nBLOCKCHAIN INVALID"
       end
 
       prev_timestamp = curr_block[3]
