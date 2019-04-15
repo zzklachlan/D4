@@ -173,13 +173,13 @@ class Program
       prev_hash = curr_block[4]
       count += 1
     end
-    output
+    output @users
     error_code
   end
 
   # output the result
-  def output
-    @users.sort_by { |k, _v| k }.to_h.each do |key, value|
+  def output(users)
+    users.sort_by { |k, _v| k }.to_h.each do |key, value|
       puts "#{key}: #{value} billcoins" unless value.zero?
     end
   end
