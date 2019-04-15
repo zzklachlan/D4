@@ -13,7 +13,6 @@ class Program
   # This is the initial mathod
   def initialize(file)
     @users = {}
-    @blocks = []
     @hash_val = {}
     @error_code = 0
     @file = file
@@ -133,8 +132,7 @@ class Program
     prev_timestamp = ''
     curr_block = []
     @file.each do |line|
-      @blocks << line.chomp # each line is a block
-      curr_block = @blocks[count].split('|')
+      curr_block = line.chomp.split('|')
       @error_code = check_extra_pipe(curr_block)
       return "Line #{count}: extra pipe found! \nBLOCKCHAIN INVALID" if error_code == 1
 
