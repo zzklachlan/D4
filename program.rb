@@ -50,10 +50,12 @@ class Program
     0
   end
 
+  # check if the address contain anything other than numeric
   def check_string(string)
     string.scan(/\D/).empty?
   end
 
+  # check if there's any invalid formatting
   def check_invalid_format(from_addr, to_addr, amount, _b_num, _tran)
     return 5 if from_addr.nil? || to_addr.nil? || amount.nil?
 
@@ -75,12 +77,14 @@ class Program
     0
   end
 
+  # Check if the current block contains the right previous block hash
   def check_prev_hash(prev_hash, curr_hash, _b_num)
     return 4 unless prev_hash.eql? curr_hash
 
     0
   end
 
+  # check if the time stamp meets the requirements
   def check_timestamp(prev_time, curr_time, _b_num)
     prev_time1 = prev_time.split('.')[0].to_i
     prev_time2 = prev_time.split('.')[1].to_i
@@ -92,6 +96,7 @@ class Program
     0
   end
 
+  # check if the final balance is negative
   def check_balance
     @users.each do |key, value|
       return ['6', key, value] if value.negative?
@@ -99,6 +104,7 @@ class Program
     0
   end
 
+  # check if the hash of the blockchian is correctly generated
   def check_hash(block_number, previous_hash, transaction_string, timestamp_string, expected_hash)
     string_to_hash = "#{block_number}|#{previous_hash}|#{transaction_string}|#{timestamp_string}"
     sum = 0
@@ -118,12 +124,14 @@ class Program
     0
   end
 
+  # test if the block contain any extra pipes
   def check_extra_pipe(block)
     return 1 unless block.length == 5
 
     0
   end
 
+  # Check each block for errors
   def check_block(curr_block, prev_timestamp, prev_hash, count)
     @error_code = check_extra_pipe(curr_block)
     return "Line #{count}: extra pipe found! \nBLOCKCHAIN INVALID" if @error_code == 1
@@ -173,7 +181,6 @@ class Program
     @file.each do |line|
       curr_block = line.chomp.split('|')
       msg = check_block(curr_block, prev_timestamp, prev_hash, count)
-
       return msg unless @error_code.zero?
 
       prev_timestamp = curr_block[3]
