@@ -8,22 +8,26 @@ class Program
   attr_accessor :blocks
   attr_accessor :file
   attr_accessor :hash_val
+  attr_accessor :error_code
 
   # This is the initial mathod
-  def initialize(file_name)
+  def initialize(file)
     @users = {}
     @blocks = []
     @hash_val = {}
-    open_file(file_name)
+    @error_code = 0
+    @file = file
   end
 
   # This will open a file
-  def open_file(file_name)
-    @file = File.open(file_name, 'r')
-  rescue StandardError
-    puts 'Usage: ruby verifier.rb <name_of_file>
-    name_of_file = name of file to verify'
-    exit(0)
+  def self.open_file(file_name)
+    begin
+      file = File.open(file_name, 'r')
+    rescue StandardError
+      puts "Usage: ruby verifier.rb <name_of_file> \nname_of_file = name of file to verify"
+      return false
+    end
+    file
   end
 
   # This modifies user's amount
@@ -36,12 +40,15 @@ class Program
 
   # This takes care of every single transaction
   def transaction(tran, b_num)
+    error_code = 0
     multi_tran = tran.split(':')
     multi_tran.each do |x|
       single_tran = x.split(/>|[()]/)
-      check_invalid_format(single_tran[0], single_tran[1], single_tran[2].to_i, b_num, tran)
+      error_code = check_invalid_format(single_tran[0], single_tran[1], single_tran[2].to_i, b_num, tran)
+      return error_code if error_code == 5
       modify_user(single_tran[0], single_tran[1], single_tran[2].to_i)
     end
+    0
   end
 
   def check_string(string)
@@ -49,11 +56,7 @@ class Program
   end
 
   def check_invalid_format(from_addr, to_addr, amount, b_num, tran)
-    if from_addr.nil? || to_addr.nil? || amount.nil?
-      puts "Line #{b_num}: Could not parse transactions list '#{tran}'"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    return 5 if from_addr.nil? || to_addr.nil? || amount.nil?
 
     is_valid = true
     is_valid = false unless from_addr.length == 6 && to_addr.length == 6
@@ -61,27 +64,19 @@ class Program
     is_valid = false if check_string(from_addr) == false && from_addr != 'SYSTEM'
     is_valid = false if check_string(to_addr) == false && to_addr != 'SYSTEM'
 
-    if is_valid == false
-      puts "Line #{b_num}: Could not parse transactions list '#{tran}'"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    return 5 if is_valid == false
+    0
   end
 
   # This method checks the block number
   def check_block_number(count, b_num)
-    return if count == b_num.to_i
-
-    puts "Line #{count}: Invalid block number #{b_num}, should be #{count} \nBLOCKCHAIN INVALID"
-    exit(0)
+    return 2 unless count == b_num.to_i 
+    0
   end
 
   def check_prev_hash(prev_hash, curr_hash, b_num)  
-    unless prev_hash.eql? curr_hash
-      puts "Line #{b_num}: Previous has was #{curr_hash}, should be #{prev_hash}"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    return 4 unless prev_hash.eql? curr_hash
+    0
   end
 
   def check_timestamp(prev_time, curr_time, b_num)
@@ -90,43 +85,42 @@ class Program
     curr_time1 = curr_time.split('.')[0].to_i
     curr_time2 = curr_time.split('.')[1].to_i
 
-    if prev_time1 > curr_time1 || (prev_time1 == curr_time1 && prev_time2 > curr_time2)
-      puts "Line #{b_num}: Previous timestamp #{prev_time} => new timestamp #{curr_time}"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    return 3 if prev_time1 > curr_time1 || (prev_time1 == curr_time1 && prev_time2 > curr_time2)
+    0
   end
 
   def check_balance(b_num)
     invalid_addr = ''
     invalid_balance = 0
     @users.each do |key, value|
-      if value < 0
-        invalid_addr = key 
-        invalid_balance = value 
-        break
-      end
+      return ['6', key, value] if value < 0
     end
 
-    unless invalid_addr == ''
-      puts "Line #{b_num}: address #{invalid_addr} has #{invalid_balance} billcoins!"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    0
   end
 
   def check_hash(block_number, previous_hash, transaction_string, timestamp_string, expected_hash)
     string_to_hash = "#{block_number}|#{previous_hash}|#{transaction_string}|#{timestamp_string}"
     sum = 0
+    x_val = 0
     string_to_hash.unpack('U*').each do |x|
-      sum += ((x**3000) + (x**x) - (3**x)) * (7**x)
+      unless @hash_val.has_key?(x)
+        x_val = ((x**3000) + (x**x) - (3**x)) * (7**x)
+        @hash_val[x] = x_val
+      else
+        x_val = @hash_val[x]
+      end
+      sum += x_val
     end
     sum = (sum % 65536).to_s(16)
-    unless expected_hash == sum
-      puts "Line #{block_number}: String '#{string_to_hash}' hash set to #{expected_hash}, should be #{sum}"
-      puts 'BLOCKCHAIN INVALID'
-      exit(0)
-    end
+    
+    return ['7', string_to_hash, expected_hash, sum] unless expected_hash == sum
+    0
+  end
+
+  def check_extra_pipe(b_num, block)
+    return 1 unless block.length == 5
+    0
   end
 
   # run the program
@@ -138,17 +132,35 @@ class Program
     @file.each do |line|
       @blocks << line.chomp # each line is a block
       curr_block = @blocks[count].split('|')
-      check_block_number(count, curr_block[0])
-      check_timestamp(prev_timestamp, curr_block[3], curr_block[0].to_i) unless count.zero?
-      check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
-      transaction(curr_block[2], curr_block[0])
-      check_balance(curr_block[0].to_i)
-      check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
+      @error_code = check_extra_pipe(count, curr_block)
+      return "Line #{count}: extra pipe found! \nBLOCKCHAIN INVALID" if error_code == 1
+      
+      @error_code = check_block_number(count, curr_block[0])
+      return "Line #{count}: Invalid block number #{curr_block[0]}, should be #{count} \nBLOCKCHAIN INVALID" if error_code == 2
+      
+      @error_code = check_timestamp(prev_timestamp, curr_block[3], curr_block[0].to_i) unless count.zero?
+      return "Line #{count}: Previous timestamp #{prev_timestamp} => new timestamp #{curr_block[3]} \nBLOCKCHAIN INVALID" if error_code == 3
+      
+      @error_code = check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
+      return "Line #{count}: Previous has was #{curr_block[1]}, should be #{prev_hash}\nBLOCKCHAIN INVALID" if error_code == 4
+      
+      @error_code = transaction(curr_block[2], curr_block[0])
+      return "Line #{count}: Could not parse transactions list '#{curr_block[2]}' \nBLOCKCHAIN INVALID" if error_code == 5
+      
+      error_balance = check_balance(curr_block[0].to_i)
+      @error_code = error_balance[0].to_i unless error_balance == 0
+      return "Line #{count}: address #{error_balance[1]} has #{error_balance[2]} billcoins! \nBLOCKCHAIN INVALID" if error_code == 6
+      
+      error_hash = check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
+      @error_code = error_hash[0].to_i unless error_hash == 0
+      return "Line #{count}: String '#{error_hash[1]}' hash set to #{error_hash[2]}, should be #{error_hash[3]}\nBLOCKCHAIN INVALID" if error_code == 7
+
       prev_timestamp = curr_block[3]
       prev_hash = curr_block[4]
       count += 1
     end
-    output
+    output  
+    error_code
   end
 
   # output the result
