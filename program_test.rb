@@ -197,10 +197,10 @@ class ProgramTest < Minitest::Test
 	def test_run
 		mock_file = Minitest::Mock.new('file')
     program3 = Program.new(mock_file)
-    #str = "1|1|1|1|1\n"
     def mock_file.each; "1|1|1|1|1\n"; end
     def String.chomp; "1|1|1|1|1";end
-    def String.split(y); [1,1,1,1,1];end
+		def String.split(y); [1,1,1,1,1];end
+		@test_program.error_code = 1
     assert_output(""){program3.run}
 	end
 
