@@ -42,12 +42,12 @@ class ProgramTest < Minitest::Test
 		assert_equal @test_program.transaction('735567>995917(1):577469>995917(1)', 3), 0
 	end
 
-	def check_valid_string
-		assert_equal check_string('789987'), true
+	def test_check_valid_string
+		assert_equal @test_program.check_string('789987'), true
 	end
 
-	def check_invalid_string
-		assert_equal check_string('123abc'), false
+	def test_check_invalid_string
+		assert_equal @test_program.check_string('123abc'), false
 	end
 
 	def test_check_valid_format
@@ -115,22 +115,101 @@ class ProgramTest < Minitest::Test
 	end
 
 	# This test if run return extra pipe detected
-  def test_run_return_extra_pipe
-    mock_file = Minitest::Mock.new('file')
+  # def test_run_return_extra_pipe
+  #   mock_file = Minitest::Mock.new('file')
+  #   program3 = Program.new(mock_file)
+  #   str = "1|1|1|1|1\n"
+  #   def mock_file.each; str; end
+  #   def String.chomp; "1|1|1|1|1";end
+  #   def String.split(y); [1,1,1,1,1];end
+  #   assert_output(""){program3.run}
+	# end
+	
+	def test_check_block_extra_pipe
+		def @test_program.check_extra_pipe(x); 1; end
+		assert_equal "Line 3: extra pipe found! \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_number
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x, y); 2; end
+		assert_equal "Line 3: Invalid block number 0, should be 3 \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_timestamp
+    def @test_program.check_extra_pipe(x); 0; end
+    def @test_program.check_block_number(x,y); 0;end
+    def @test_program.check_timestamp(x,y,z); 3; end
+    assert_equal "Line 3: Previous timestamp 1553184699.650330000 => "\
+    "new timestamp 1553184699.650330000 \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+  end
+
+	def test_check_block_prev_hash
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x, y); 0; end
+		def @test_program.check_timestamp(x, y, z); 0; end
+		def @test_program.check_prev_hash(x, y, z); 4; end
+		assert_equal "Line 3: Previous has was 0, should be 288d\nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_transaction
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x, y); 0; end
+		def @test_program.check_timestamp(x, y, z); 0; end
+		def @test_program.check_prev_hash(x, y, z); 0; end
+		def @test_program.transaction(x, y); 5; end
+		assert_equal "Line 3: Could not parse transactions list 'SYSTEM>569274(100)' \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_balance
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x, y); 0; end
+		def @test_program.check_timestamp(x, y, z); 0; end
+		def @test_program.check_prev_hash(x, y, z); 0; end
+		def @test_program.transaction(x, y); 0; end
+		def @test_program.check_balance(); ['6', '123456', '-10']; end
+		assert_equal "Line 3: address 123456 has -10 billcoins! \nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_hash
+		def @test_program.check_extra_pipe(x); 0; end
+		def @test_program.check_block_number(x, y); 0; end
+		def @test_program.check_timestamp(x, y, z); 0; end
+		def @test_program.check_prev_hash(x, y, z); 0; end
+		def @test_program.transaction(x, y); 0; end
+		def @test_program.check_balance(); 0; end
+		def @test_program.check_hash(a, b, c, d, e); ['7', '0|0|SYSTEM>569274(100)|1553184699.650330000', '95bc', '288d']; end
+		assert_equal "Line 3: String '0|0|SYSTEM>569274(100)|1553184699.650330000' hash set to 95bc, "\
+    "should be 288d\nBLOCKCHAIN INVALID", @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+
+	def test_check_block_balance
+    def @test_program.check_extra_pipe(x); 0; end
+    def @test_program.check_block_number(x,y); 0;end
+    def @test_program.check_timestamp(x,y,z); 0; end
+    def @test_program.check_prev_hash(x,y,z); 0; end
+		def @test_program.transaction(x,y); 0;end
+		def @test_program.check_balance(); 0; end
+		def @test_program.check_hash(a, b, c, d, e); 0; end
+    assert_equal 0, @test_program.check_block(['0', '0', 'SYSTEM>569274(100)', '1553184699.650330000', '288d'], '1553184699.650330000', '288d', 3)
+	end
+	
+	def test_run
+		mock_file = Minitest::Mock.new('file')
     program3 = Program.new(mock_file)
-    str = "1|1|1|1|1\n"
-    def mock_file.each; str; end
+    #str = "1|1|1|1|1\n"
+    def mock_file.each; "1|1|1|1|1\n"; end
     def String.chomp; "1|1|1|1|1";end
     def String.split(y); [1,1,1,1,1];end
     assert_output(""){program3.run}
-  end
+	end
 
-	def check_output
+	def test_output
 		#puts @test_program.users
 		users = { '123456' => 10, '345678' => 0, '567890' => 0 }
 		def users.sort_by; { '123456' => 10, '345678' => 0, '567890' => 0 }; end
-		assert_output("123456: 10 billcoins") {
-			output(users)
+		assert_output("123456: 10 billcoins\n") {
+			@test_program.output(users)
 		}
 	end
 end

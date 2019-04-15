@@ -175,42 +175,6 @@ class Program
       msg = check_block(curr_block, prev_timestamp, prev_hash, count)
 
       return msg unless @error_code.zero?
-      # @error_code = check_extra_pipe(curr_block)
-      # return "Line #{count}: extra pipe found! \nBLOCKCHAIN INVALID" if error_code == 1
-
-      # @error_code = check_block_number(count, curr_block[0])
-      # if error_code == 2
-      #   return "Line #{count}: Invalid block number #{curr_block[0]}, should be #{count} \nBLOCKCHAIN INVALID"
-      # end
-
-      # @error_code = check_timestamp(prev_timestamp, curr_block[3], curr_block[0].to_i) unless count.zero?
-      # if error_code == 3
-      #   return "Line #{count}: Previous timestamp #{prev_timestamp} => "\
-      #   "new timestamp #{curr_block[3]} \nBLOCKCHAIN INVALID"
-      # end
-
-      # @error_code = check_prev_hash(prev_hash, curr_block[1], curr_block[0].to_i) unless count.zero?
-      # if error_code == 4
-      #   return "Line #{count}: Previous has was #{curr_block[1]}, should be #{prev_hash}\nBLOCKCHAIN INVALID"
-      # end
-
-      # @error_code = transaction(curr_block[2], curr_block[0])
-      # if error_code == 5
-      #   return "Line #{count}: Could not parse transactions list '#{curr_block[2]}' \nBLOCKCHAIN INVALID"
-      # end
-
-      # error_balance = check_balance
-      # @error_code = error_balance[0].to_i if error_balance.is_a? Array
-      # if error_code == 6
-      #   return "Line #{count}: address #{error_balance[1]} has #{error_balance[2]} billcoins! \nBLOCKCHAIN INVALID"
-      # end
-
-      # error_hash = check_hash(curr_block[0], curr_block[1], curr_block[2], curr_block[3], curr_block[4])
-      # @error_code = error_hash[0].to_i if error_hash.is_a? Array
-      # if error_code == 7
-      #   return "Line #{count}: String '#{error_hash[1]}' hash set to #{error_hash[2]}, "\
-      #   "should be #{error_hash[3]}\nBLOCKCHAIN INVALID"
-      # end
 
       prev_timestamp = curr_block[3]
       prev_hash = curr_block[4]
